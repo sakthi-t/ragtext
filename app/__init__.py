@@ -64,7 +64,10 @@ def create_app(config_class=Config):
         base_url = app.config.get('APP_BASE_URL')
         if not base_url:
             return None
-        current_base = request.host_url.rstrip('/')
+        # Respect reverse-proxy headers (Railway/Cloud) to avoid http/https redirect loops
+        forwarded_proto = request.headers.get('X-Forwarded-Proto')
+        scheme = forwarded_proto or request.scheme
+        current_base = f"{scheme}://{request.host}".rstrip('/')
         if current_base != base_url.rstrip('/'):
             return redirect(base_url.rstrip('/') + request.full_path, code=302)
     
